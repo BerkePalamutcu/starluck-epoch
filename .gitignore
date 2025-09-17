@@ -1,0 +1,7 @@
+__pycache__/
+.env
+.env.test
+.venv
+debug_outputs
+Dockerfile
+.dockerignore
