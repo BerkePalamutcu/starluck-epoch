@@ -17,7 +17,6 @@ A powerful, modern API that computes natal data, renders beautiful SVG chart whe
 - **Synastry & Composite** — Relationship compatibility analysis
 - **Transit Forecasts** — Future planetary influences and timing
 - **Markdown Reports** — Clean, readable astrological interpretations
-- **High Performance** — Built with FastAPI for speed and reliability
 
 ## Quick Setup
 
