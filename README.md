@@ -1,187 +1,333 @@
-Starluck Epoch API
+# Starluck Epoch API
+
+> *FastAPI service for astrological charts & visuals — created by the Starluck team*
+
+A powerful, modern API that computes natal data, renders beautiful SVG chart wheels, performs synastry calculations, and generates insightful astrological reports.
+
+## Chart Examples
 
 | **Whole Sign Chart** | **Placidus Chart** | **Synastry Biwheel** |
-|---|---|---|
-| <img src="docs/media/whole.png" alt="Whole Sign Chart" width="280" /> | <img src="docs/media/placidus.png" alt="Placidus Chart" width="280" /> | <img src="docs/media/biwheel.png" alt="Synastry Biwheel" width="280" /> |
-FastAPI service for astrological charts & visuals — created by the Starluck team.
-It computes natal data, renders SVG chart wheels (single & biwheel), runs synastry/composite math, and generates short reports & transit forecasts.
+|:---:|:---:|:---:|
+| <img src="docs/media/wheel_whole.svg" alt="Whole Sign Chart" width="480" /> | <img src="docs/media/wheel_placidus.svg" alt="Placidus Chart" width="480" /> | <img src="docs/media/biwheel.svg" alt="Synastry Biwheel" width="480" /> |
 
-Natal chart (planets, houses, angles, aspects)
+## Features
 
-SVG chart wheels (single + biwheel)
+- **Natal Charts** — Complete birth chart calculations with planets, houses, angles & aspects
+- **SVG Chart Wheels** — Beautiful single and biwheel visualizations  
+- **Synastry & Composite** — Relationship compatibility analysis
+- **Transit Forecasts** — Future planetary influences and timing
+- **Markdown Reports** — Clean, readable astrological interpretations
+- **High Performance** — Built with FastAPI for speed and reliability
 
-Synastry & Composite calculations
+## Quick Setup
 
-Transit forecasts
+### Prerequisites
+- Python 3.11+
 
-Lightweight Markdown reports
+### Installation
 
-Quick Setup
-
-Requirements: Python 3.11+
-
-git clone <your-repo>
+```bash
+# Clone the repository
+git clone git@github.com:BerkePalamutcu/starluck-epoch.git
 cd starluck-epoch
 
+# Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
+```
 
+### Configuration
 
-Create a .env (API key is optional):
+Create a `.env` file in the root directory like:
 
-STARLUCK_DEBUG=false
-STARLUCK_API_KEY=             # optional
-STARLUCK_ALLOWED_HOSTS=127.0.0.1,localhost
-STARLUCK_CORS_ORIGINS=http://localhost:8000
-STARLUCK_SWE_PATH=            # optional; leave empty (no external SWE files required)
+```env
+STARLUCK_DEBUG=false                 # If set true This will create a debug_outputs folder when you make requests so that you can examine the outputs. Set false in production or modify the code.
+STARLUCK_API_KEY=                    # Optional API key protection in case you want to connect other services
+STARLUCK_ALLOWED_HOSTS=127.0.0.1,localhost # Optional if you want to use it as a microservice feel free to modify
+STARLUCK_CORS_ORIGINS=http://localhost:8000 # Optional if you want to use it as a microservice feel free to modify 
+STARLUCK_SWE_PATH=                   # Optional; works without external files but if you want to use you can also include swiss ephimeris.
+```
 
+### Start the Server
 
-Run:
+```bash
+uvicorn main:app --reload
+```
 
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-# or
-python -m app.main
+**Health Check:** `GET /api/v1/health`
 
+---
 
-Health check: GET /api/v1/health
+## API Reference
 
-Endpoints (brief)
+All endpoints are available under `/api/v1`. Include `Authorization: Bearer <key>` header if using API key authentication.
 
-All endpoints live under /api/v1. If you set an API key, send Authorization: Bearer <key>.
+### Natal Chart
+`POST /api/v1/natal`
 
-1) Natal — POST /natal
+Calculate a complete birth chart with planets, houses, and aspects.
 
-Compute a birth chart.
+<details>
+<summary><strong>Request & Response Details</strong></summary>
 
-Request
-
+**Request:**
+```json
 {
   "datetime_local": "1990-01-01 12:00",
   "timezone": "America/New_York",
-  "location": {"lat": 40.7128, "lon": -74.0060, "elevation_m": 10},
-  "house_system": "PLACIDUS"  // or "WHOLE"
+  "location": {
+    "lat": 40.7128,
+    "lon": -74.0060,
+    "elevation_m": 10
+  },
+  "house_system": "PLACIDUS"  // Options: "PLACIDUS", "WHOLE"
 }
+```
 
-
-Response (trimmed)
-
+**Response:**
+```json
 {
-  "angles": {"ASC": 23.4, "MC": 15.1, "DS": 203.4, "IC": 195.1},
-  "houses": [23.4, 45.1, ...],
-  "planets": {"Sun": {"lon": 280.1, "deg": 10.1, "retro": false}, "...": {}},
-  "aspects": [{"p1":"Sun","p2":"Moon","aspect":"trine","orb":2.1}]
+  "angles": {
+    "ASC": 23.4,
+    "MC": 15.1,
+    "DS": 203.4,
+    "IC": 195.1
+  },
+  "houses": [23.4, 45.1, 67.8, ...],
+  "planets": {
+    "Sun": {
+      "lon": 280.1,
+      "deg": 10.1,
+      "retro": false
+    },
+    "Moon": { ... }
+  },
+  "aspects": [
+    {
+      "p1": "Sun",
+      "p2": "Moon",
+      "aspect": "trine",
+      "orb": 2.1
+    }
+  ]
 }
+```
+</details>
 
-2) SVG Wheel — POST /svg
+---
 
-Turn a natal chart into a single-wheel SVG (purple band).
+### SVG Chart Wheel
+`POST /api/v1/svg`
 
-Request
+Generate a beautiful single-wheel SVG chart visualization.
 
-{ "chart_data": { /* output from /natal */ }, "size": 900, "show_aspects": true }
+<details>
+<summary><strong>Request & Response Details</strong></summary>
 
-
-Response
-
-{ "svg_content": "<svg ...>...</svg>", "size": 900 }
-
-3) Biwheel — POST /biwheel
-
-Synastry double wheel: inner vs. outer chart.
-
-Request
-
+**Request:**
+```json
 {
-  "inner_chart": { /* /natal A */ },
-  "outer_chart": { /* /natal B */ },
-  "size": 920,
-  "label_inner": "A",
-  "label_outer": "B",
+  "chart_data": { /* natal chart output */ },
+  "size": 900,
   "show_aspects": true
 }
+```
 
-
-Response
-
-{ "svg_content": "<svg ...>...</svg>", "size": 920 }
-
-4) Synastry — POST /synastry
-
-Inter-chart aspects only (no SVG).
-
-Request
-
-{ "chart_a": { /* /natal A */ }, "chart_b": { /* /natal B */ } }
-
-
-Response (trimmed)
-
-{ "interaspects": [{ "p1":"Sun", "p2":"Moon", "aspect":"trine", "orb": 1.9 }] }
-
-5) Composite — POST /composite
-
-Midpoint-composite data.
-
-Request
-
-{ "chart_a": { /* /natal A */ }, "chart_b": { /* /natal B */ } }
-
-
-Response (trimmed)
-
-{ "midpoints": { "Sun": { "lon": 123.4 }, "...": {} } }
-
-6) Report — POST /report
-
-Short Markdown report for a single chart.
-
-Request
-
-{ "chart_data": { /* /natal */ }, "title": "Birth Chart" }
-
-
-Response
-
-{ "report_content": "# Birth Chart\n..." }
-
-7) Forecast — POST /forecast
-
-Time-window transit aspects to natal.
-
-Request
-
+**Response:**
+```json
 {
-  "natal_chart": { /* /natal */ },
+  "svg_content": "<svg width='900' height='900'>...</svg>",
+  "size": 900
+}
+```
+</details>
+
+---
+
+### Synastry Biwheel
+`POST /api/v1/biwheel`
+
+Create a synastry comparison chart with inner and outer wheels.
+
+<details>
+<summary><strong>Request & Response Details</strong></summary>
+
+**Request:**
+```json
+{
+  "inner_chart": { /* natal chart A */ },
+  "outer_chart": { /* natal chart B */ },
+  "size": 920,
+  "label_inner": "Person A",
+  "label_outer": "Person B",
+  "show_aspects": true
+}
+```
+
+**Response:**
+```json
+{
+  "svg_content": "<svg width='920' height='920'>...</svg>",
+  "size": 920
+}
+```
+</details>
+
+---
+
+### Synastry Analysis
+`POST /api/v1/synastry`
+
+Calculate inter-chart aspects between two people (no SVG output).
+
+<details>
+<summary><strong>Request & Response Details</strong></summary>
+
+**Request:**
+```json
+{
+  "chart_a": { /* natal chart A */ },
+  "chart_b": { /* natal chart B */ }
+}
+```
+
+**Response:**
+```json
+{
+  "interaspects": [
+    {
+      "p1": "Sun",
+      "p2": "Moon",
+      "aspect": "trine",
+      "orb": 1.9
+    }
+  ]
+}
+```
+</details>
+
+---
+
+### Composite Chart
+`POST /api/v1/composite`
+
+Generate a midpoint composite chart for relationship analysis.
+
+<details>
+<summary><strong>Request & Response Details</strong></summary>
+
+**Request:**
+```json
+{
+  "chart_a": { /* natal chart A */ },
+  "chart_b": { /* natal chart B */ }
+}
+```
+
+**Response:**
+```json
+{
+  "midpoints": {
+    "Sun": { "lon": 123.4 },
+    "Moon": { "lon": 67.8 }
+  }
+}
+```
+</details>
+
+---
+
+### Chart Report
+`POST /api/v1/report`
+
+Generate a readable Markdown interpretation of a natal chart.
+
+<details>
+<summary><strong>Request & Response Details</strong></summary>
+
+**Request:**
+```json
+{
+  "chart_data": { /* natal chart output */ },
+  "title": "Birth Chart Analysis"
+}
+```
+
+**Response:**
+```json
+{
+  "report_content": "# Birth Chart Analysis\n\n## Sun in Capricorn\n..."
+}
+```
+</details>
+
+---
+
+### Transit Forecast
+`POST /api/v1/forecast`
+
+Calculate upcoming transit aspects to natal planets within a time window.
+
+<details>
+<summary><strong>Request & Response Details</strong></summary>
+
+**Request:**
+```json
+{
+  "natal_chart": { /* natal chart data */ },
   "start_date": "2025-09-18",
   "timezone": "America/New_York",
   "days": 7,
   "step_hours": 12
 }
+```
 
-
-Response (trimmed)
-
+**Response:**
+```json
 {
   "transits": [
-    { "when_utc": "2025-09-18T06:40:00Z", "transit": "Sun",
-      "natal": "Mercury", "aspect": "trine", "orb_diff": 0.01 }
+    {
+      "when_utc": "2025-09-18T06:40:00Z",
+      "transit": "Sun",
+      "natal": "Mercury",
+      "aspect": "trine",
+      "orb_diff": 0.01
+    }
   ]
 }
+```
+</details>
 
-Notes
+---
 
-Works out of the box without external Swiss Ephemeris files.
+## Technical Notes
 
-If you do provide STARLUCK_SWE_PATH, it will use it when available.
+- **Zero Dependencies**: Works out of the box without external Swiss Ephemeris files
+- **Optional Enhancement**: Set `STARLUCK_SWE_PATH` to use external ephemeris data when available
+- **High Accuracy**: Precise astronomical calculations for professional use
+- **Modern Stack**: Built with FastAPI, offering automatic API documentation at `/docs`
 
-License
+## License
 
-APGL license. Free to use; some dependencies are also APGL-licensed.
+This project is licensed under the **AGPL License**. Free to use with some dependencies also under AGPL licensing.
 
-Contributing
+## Contributing
 
-Issues and PRs are welcome.
-Open a ticket with a clear description (bug, enhancement, or design tweak) and, if possible, a minimal repro or a screenshot of the chart.
+We welcome contributions! Here's how to get involved:
+
+**Bug Reports**: Open an issue with a clear description and minimal reproduction steps
+
+**Feature Requests**: Suggest enhancements with detailed use cases  
+
+**Design Improvements**: Submit PRs for UI/UX improvements with screenshots
+
+**Documentation**: Help improve our docs and examples
+
+Before submitting, please include a clear description, relevant screenshots for visual changes, and test your changes thoroughly.
+
+---
 
 © Starluck Team
