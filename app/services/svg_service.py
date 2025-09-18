@@ -337,31 +337,39 @@ class SVGService:
     def _svg_biwheel(self, inner: Dict, outer: Dict, size: int = 1000,
                     lab_in: str = "Inner", lab_out: str = "Outer",
                     show_aspects: bool = True) -> str:
-        """Generate synastry biwheel SVG with the same band + subtle angles."""
+        """Generate synastry biwheel SVG with proper planet rings."""
         asc = inner["angles"]["ASC"]
         cx = cy = size // 2
 
+        # Adjusted radii for proper biwheel layout
         r_outer = size * 0.48
         r_sign_outer  = size * 0.44
         r_sign_inner  = size * 0.37
-        r_house_out   = size * 0.35
-        r_house_in    = size * 0.24
-        r_in_planet   = size * 0.295
-        r_in_label    = size * 0.33
-        r_out_planet  = size * 0.40
-        r_out_label   = size * 0.44
-        r_house_num   = size * 0.20
-        r_inner_circle = size * 0.16
+        
+        # Outer planets ring (between zodiac and inner planets)
+        r_outer_planets_outer = size * 0.355
+        r_outer_planets_inner = size * 0.32
+        r_outer_planets_mid = size * 0.3375  # Center of outer planets ring
+        
+        # Inner planets ring
+        r_inner_planets_outer = size * 0.31
+        r_inner_planets_inner = size * 0.28
+        r_inner_planets_mid = size * 0.295  # Center of inner planets ring
+        
+        # Houses
+        r_house_out = size * 0.27
+        r_house_in = size * 0.20
+        r_house_num = size * 0.16
+        r_inner_circle = size * 0.12
 
         css = """
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
         
         .chart-bg { fill: #FAFBFC; }
         .outer-ring { fill: none; stroke: #E1E4E8; stroke-width: 2; }
-        .inner-bg { fill: #FFFFFF; }
         .center-circle { fill: #F6F8FA; stroke: #E1E4E8; stroke-width: 1; }
         
-        /* Purple zodiac band only */
+        /* Zodiac band */
         .zodiac-band   { fill: #6B46C1; }
         .zodiac-cutout { fill: #FFFFFF; }
         .zodiac-divider { stroke: #FFFFFF; stroke-width: 1; }
@@ -375,38 +383,60 @@ class SVGService:
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
         
+        /* Planet rings */
+        .planet-ring { fill: #F8F9FA; stroke: #D0D7DE; stroke-width: 1; }
+        .planet-ring-divider { stroke: #E1E4E8; stroke-width: 0.5; opacity: 0.5; }
+        
+        /* Houses */
         .house-circle { fill: none; stroke: #D0D7DE; stroke-width: 1.5; }
         .house-line { stroke: #D0D7DE; stroke-width: 1; opacity: 0.7; }
         .house-num { 
-            font: 700 13px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 700 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #2C3E50; 
             text-anchor: middle; 
             dominant-baseline: middle;
         }
         
-        /* Angles: short ticks only */
-        .angle-tick { stroke: #4A5568; stroke-width: 1.2; stroke-linecap: round; }
-        .angle-marker-outer { fill: #2C3E50; }
-        .angle-marker-inner { fill: #FFD700; }
+        /* Angles */
+        .angle-tick { stroke: #4A5568; stroke-width: 1.5; stroke-linecap: round; }
+        .angle-marker { fill: #FFD700; stroke: #2C3E50; stroke-width: 1.5; }
         .angle-text-bg { fill: #2C3E50; rx: 3; }
         .angle-text { 
-            font: 800 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 700 10px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #FFFFFF; 
             text-anchor: middle; 
             dominant-baseline: middle;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 0.5px;
         }
         
-        .pin { filter: url(#planet-shadow); }
-        .pout { filter: url(#planet-shadow); opacity: 0.85; }
-        .lbl { 
-            font: 600 18px serif; 
+        /* Planets */
+        .planet-inner { filter: url(#planet-shadow); }
+        .planet-outer { filter: url(#planet-shadow); opacity: 0.9; }
+        .planet-glyph { 
+            font: 600 14px serif; 
             text-anchor: middle; 
             dominant-baseline: middle;
             fill: #FFFFFF;
         }
+        .planet-degree { 
+            font: 400 8px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            text-anchor: middle; 
+            dominant-baseline: middle;
+            fill: #586069;
+        }
+        
+        /* Aspects */
         .aspect { fill: none; stroke-linecap: round; }
+        
+        /* Labels */
+        .chart-label {
+            font: 600 11px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            fill: #586069;
+            text-anchor: middle;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         """
 
         def line_at(lon, r1, r2, cls):
@@ -427,12 +457,12 @@ class SVGService:
         svg.append(f'<rect class="chart-bg" width="{size}" height="{size}"/>')
         svg.append(f'<circle class="outer-ring" cx="{cx}" cy="{cy}" r="{r_outer}"/>')
 
-        # --- Zodiac band (purple annulus) ---
-        svg.append(f'<circle class="zodiac-band"   cx="{cx}" cy="{cy}" r="{r_sign_outer}"/>')
+        # Zodiac band
+        svg.append(f'<circle class="zodiac-band" cx="{cx}" cy="{cy}" r="{r_sign_outer}"/>')
         svg.append(f'<circle class="zodiac-cutout" cx="{cx}" cy="{cy}" r="{r_sign_inner}"/>')
         svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_sign_inner}" fill="none" stroke="#FFFFFF" stroke-width="2"/>')
 
-        # Dividers
+        # Zodiac dividers
         for s in range(12):
             start = s * 30
             x1, y1 = self._pol_oriented(start, r_sign_inner, cx, cy, asc)
@@ -446,21 +476,28 @@ class SVGService:
             sign_name = ZODIAC[s]
             svg.append(text_at(start + 15, r_text, sign_name.upper(), "sign-text"))
 
+        # Outer planets ring (with light background)
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_outer}" fill="#F8F9FA" stroke="#D0D7DE" stroke-width="1"/>')
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_inner}" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1"/>')
+        
+        # Inner planets ring (with light background)
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_inner_planets_outer}" fill="#F0F1F3" stroke="#D0D7DE" stroke-width="1"/>')
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_inner_planets_inner}" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1"/>')
+
         # Houses
         svg.append(f'<circle class="house-circle" cx="{cx}" cy="{cy}" r="{r_house_out}"/>')
         svg.append(f'<circle class="house-circle" cx="{cx}" cy="{cy}" r="{r_house_in}"/>')
 
+        # House lines and numbers
         for i, house_cusp in enumerate(inner["houses"]):
             svg.append(line_at(house_cusp, r_house_in, r_house_out, "house-line"))
             x, y = self._pol_oriented(house_cusp, r_house_num, cx, cy, asc)
             svg.append(f'<text class="house-num" x="{x:.1f}" y="{y:.1f}">{i+1}</text>')
 
-        # Center
+        # Center circle
         svg.append(f'<circle class="center-circle" cx="{cx}" cy="{cy}" r="{r_inner_circle}"/>')
 
-        # Angles: ticks only near band
-        tick_start = r_house_out + 2
-        tick_end   = r_sign_inner - 2
+        # Angles - extend through planet rings
         angle_data = [
             (inner["angles"]["ASC"], "ASC"),
             (inner["angles"]["DS"],  "DS"),
@@ -468,52 +505,123 @@ class SVGService:
             (inner["angles"]["IC"],  "IC")
         ]
         for lon, abbr in angle_data:
-            svg.append(line_at(lon, tick_start, tick_end, "angle-tick"))
+            # Draw tick from houses to just before zodiac
+            svg.append(line_at(lon, r_house_out, r_sign_inner - 2, "angle-tick"))
+            
+            # Add angle marker and label
             x, y = self._pol_oriented(lon, r_sign_inner - 12, cx, cy, asc)
-            svg.append(f'<circle class="angle-marker-outer" cx="{x:.1f}" cy="{y:.1f}" r="5" filter="url(#angle-glow)"/>')
-            svg.append(f'<circle class="angle-marker-inner" cx="{x:.1f}" cy="{y:.1f}" r="2.5"/>')
-            text_x, text_y = self._pol_oriented(lon, r_sign_inner - 26, cx, cy, asc)
-            svg.append(f'<rect class="angle-text-bg" x="{text_x-16:.1f}" y="{text_y-7:.1f}" width="32" height="14"/>')
+            svg.append(f'<circle class="angle-marker" cx="{x:.1f}" cy="{y:.1f}" r="4"/>')
+            
+            text_x, text_y = self._pol_oriented(lon, r_sign_inner - 24, cx, cy, asc)
+            svg.append(f'<rect class="angle-text-bg" x="{text_x-14:.1f}" y="{text_y-6:.1f}" width="28" height="12"/>')
             svg.append(f'<text class="angle-text" x="{text_x:.1f}" y="{text_y:.1f}">{abbr}</text>')
 
-        # Inner planets
-        used=[]
-        for name,p in sorted(inner["planets"].items(), key=lambda kv: kv[1]["lon"]):
-            lon=p["lon"]; rr=r_in_planet
-            for (pl,pr) in used[-8:]:
-                if min(abs(lon-pl), 360-abs(lon-pl)) <= 8: rr -= 15
-            x,y = self._pol_oriented(lon, rr, cx, cy, asc)
-            color = PLANET_COLORS.get(name, "#000")
-            svg.append(f'<circle class="pin" cx="{x:.1f}" cy="{y:.1f}" r="10" fill="{color}"/>')
-            svg.append(f'<text class="lbl" x="{x:.1f}" y="{y+1:.1f}">{P_GLYPH.get(name,name[0])}</text>')
-            used.append((lon,rr))
+        # Chart labels
+        svg.append(f'<text class="chart-label" x="{cx}" y="{cy + r_inner_planets_mid + 6}">{lab_in}</text>')
+        svg.append(f'<text class="chart-label" x="{cx}" y="{cy + r_outer_planets_mid + 6}">{lab_out}</text>')
 
-        # Outer planets
-        used=[]
-        for name,p in sorted(outer["planets"].items(), key=lambda kv: kv[1]["lon"]):
-            lon=p["lon"]; rr=r_out_planet
-            for (pl,pr) in used[-8:]:
-                if min(abs(lon-pl), 360-abs(lon-pl)) <= 8: rr += 15
-            x,y = self._pol_oriented(lon, rr, cx, cy, asc)
+        # Inner planets (in the inner planet ring)
+        placed_inner = []
+        for name, p in sorted(inner["planets"].items(), key=lambda kv: kv[1]["lon"]):
+            if name == "PartOfFortune":
+                continue
+                
+            lon = p["lon"]
+            r_use = r_inner_planets_mid
+            
+            # Anti-collision for inner planets
+            for (plon, pr) in placed_inner[-8:]:
+                if min(abs(lon-plon), 360-abs(lon-plon)) <= 10:
+                    # Adjust radius slightly to avoid overlap
+                    r_use += 8 if (len(placed_inner) % 2 == 0) else -8
+            
+            x, y = self._pol_oriented(lon, r_use, cx, cy, asc)
             color = PLANET_COLORS.get(name, "#000")
-            svg.append(f'<circle class="pout" cx="{x:.1f}" cy="{y:.1f}" r="8" fill="{color}"/>')
-            svg.append(f'<text class="lbl" x="{x:.1f}" y="{y+1:.1f}">{P_GLYPH.get(name,name[0])}</text>')
-            used.append((lon,rr))
+            
+            # Planet circle and glyph
+            svg.append(f'<circle class="planet-inner" cx="{x:.1f}" cy="{y:.1f}" r="9" fill="{color}"/>')
+            svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+1:.1f}">{P_GLYPH.get(name, name[0])}</text>')
+            
+            # Degree label
+            d = int(p["deg"])
+            m = int(round((p["deg"]-d)*60))
+            retro = "℞" if p.get("retro") else ""
+            degree_label = f'{d}°{m:02d}′{retro}'
+            
+            # Place degree text slightly offset from planet
+            deg_x, deg_y = self._pol_oriented(lon, r_use - 15, cx, cy, asc)
+            svg.append(f'<text class="planet-degree" x="{deg_x:.1f}" y="{deg_y:.1f}">{degree_label}</text>')
+            
+            placed_inner.append((lon, r_use))
+
+        # Outer planets (in the outer planet ring)
+        placed_outer = []
+        for name, p in sorted(outer["planets"].items(), key=lambda kv: kv[1]["lon"]):
+            if name == "PartOfFortune":
+                continue
+                
+            lon = p["lon"]
+            r_use = r_outer_planets_mid
+            
+            # Anti-collision for outer planets
+            for (plon, pr) in placed_outer[-8:]:
+                if min(abs(lon-plon), 360-abs(lon-plon)) <= 10:
+                    # Adjust radius slightly to avoid overlap
+                    r_use += 8 if (len(placed_outer) % 2 == 0) else -8
+            
+            x, y = self._pol_oriented(lon, r_use, cx, cy, asc)
+            color = PLANET_COLORS.get(name, "#000")
+            
+            # Planet circle and glyph (slightly smaller for outer)
+            svg.append(f'<circle class="planet-outer" cx="{x:.1f}" cy="{y:.1f}" r="8" fill="{color}"/>')
+            svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+1:.1f}" style="font-size:12px">{P_GLYPH.get(name, name[0])}</text>')
+            
+            # Degree label
+            d = int(p["deg"])
+            m = int(round((p["deg"]-d)*60))
+            retro = "℞" if p.get("retro") else ""
+            degree_label = f'{d}°{m:02d}′{retro}'
+            
+            # Place degree text slightly offset from planet
+            deg_x, deg_y = self._pol_oriented(lon, r_use + 15, cx, cy, asc)
+            svg.append(f'<text class="planet-degree" x="{deg_x:.1f}" y="{deg_y:.1f}">{degree_label}</text>')
+            
+            placed_outer.append((lon, r_use))
 
         # Synastry aspects
         if show_aspects:
             aspects = synastry_aspects(inner, outer)
             aspect_group = ['<g opacity="0.6">']
-            pts_in = {k: self._pol_oriented(v["lon"], r_in_planet, cx, cy, asc) for k,v in inner["planets"].items()}
-            pts_out = {k: self._pol_oriented(v["lon"], r_out_planet, cx, cy, asc) for k,v in outer["planets"].items()}
+            
+            # Get planet positions for aspects
+            pts_inner = {}
+            for name, p in inner["planets"].items():
+                if name != "PartOfFortune":
+                    # Find the actual radius used for this planet
+                    for plon, pr in placed_inner:
+                        if abs(plon - p["lon"]) < 0.01:
+                            pts_inner[name] = self._pol_oriented(p["lon"], pr, cx, cy, asc)
+                            break
+            
+            pts_outer = {}
+            for name, p in outer["planets"].items():
+                if name != "PartOfFortune":
+                    # Find the actual radius used for this planet
+                    for plon, pr in placed_outer:
+                        if abs(plon - p["lon"]) < 0.01:
+                            pts_outer[name] = self._pol_oriented(p["lon"], pr, cx, cy, asc)
+                            break
             
             for a in aspects:
-                if a["p1"] in pts_in and a["p2"] in pts_out:
-                    x1,y1 = pts_in[a["p1"]]; x2,y2 = pts_out[a["p2"]]
+                if a["p1"] in pts_inner and a["p2"] in pts_outer:
+                    x1, y1 = pts_inner[a["p1"]]
+                    x2, y2 = pts_outer[a["p2"]]
                     col, dash, opacity = self._aspect_style(a["aspect"])
                     dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+                    stroke_width = "2" if a["aspect"] in ["conjunction", "opposition", "square", "trine"] else "1.5"
+                    
                     aspect_group.append(
-                        f'<line class="aspect" stroke="{col}" stroke-width="1.5" '
+                        f'<line class="aspect" stroke="{col}" stroke-width="{stroke_width}" '
                         f'opacity="{opacity}"{dash_attr} '
                         f'x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>'
                     )
