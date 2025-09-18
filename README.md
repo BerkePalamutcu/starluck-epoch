@@ -329,4 +329,4 @@ Before submitting, please include a clear description, relevant screenshots for 
 
 ---
 
-© Starluck Team
+© MythLabs Team
