@@ -153,7 +153,9 @@ class TransitHit(BaseModel):
     natal: str = Field(..., description="Natal planet")
     aspect: str = Field(..., description="Aspect type")
     orb_diff: float = Field(..., description="Orb difference")
-
+    is_retrograde: bool = Field(..., description="Is retrograde")
+    is_combust: bool = Field(..., description="Is combust")
+    natal_house: int = Field(..., description="Natal house")
 
 class ForecastResponse(BaseModel):
     """Response model for transit forecast."""
