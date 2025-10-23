@@ -1,8 +1,11 @@
+from app.models.schemas import ForecastRequest, ForecastResponse, TransitHit
 from app.services.astrology_core import (
     _retrograde_swiss,
+    forecast_transits,
     planet_longitudes,
     HAVE_SWE
 )
+from datetime import datetime
 
 class ForecastService:
     def generate_forecast(self, request: ForecastRequest) -> ForecastResponse:
