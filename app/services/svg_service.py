@@ -3,13 +3,32 @@
 import math
 from typing import Dict, List, Tuple
 from app.services.astrology_core import (
-    SIGN_NAMES, ZODIAC, SIGN_SYMBOLS, SIGN_COLORS, P_GLYPH, PLANET_COLORS,
+     ZODIAC, P_GLYPH, PLANET_COLORS,
     synastry_aspects, find_aspects
 )
 
 
 class SVGService:
-    """Service for generating SVG charts."""
+    """
+    Service for generating SVG charts optimized for mobile and desktop viewing.
+    
+    Mobile Optimization (React Native):
+    - Larger base font sizes (18px for zodiac signs, 20px for house numbers)
+    - Thicker stroke widths (2-3px for better visibility)
+    - Larger planet circles (12-14px radius) and angle markers (6-7px)
+    - Bold font weights (800-900) for critical text elements
+    - Increased letter spacing for improved readability
+    - Enhanced text shadows and visual contrast
+    
+    All elements are proportionally sized to scale well across:
+    - Mobile phones (320px - 480px width)
+    - Tablets (768px - 1024px width)  
+    - Desktop screens (1200px+ width)
+    
+    Note: This is optimized for React Native SVG rendering where CSS media queries
+    are not supported. All sizing is done at the base level to ensure clarity on
+    small screens while remaining visually balanced on larger displays.
+    """
     
     def generate_wheel(self, request) -> Dict:
         """Generate single chart wheel."""
@@ -99,71 +118,72 @@ class SVGService:
         r_house_num   = size * 0.20
         r_inner_circle = size * 0.16
 
-        # CSS (escape & as &amp; inside @import)
+        # CSS - optimized for mobile viewing in React Native (scales well on desktop too)
         css = """
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap');
 
         /* Background */
         .chart-bg { fill: #FAFBFC; }
-        .outer-ring { fill: none; stroke: #E1E4E8; stroke-width: 2; }
+        .outer-ring { fill: none; stroke: #E1E4E8; stroke-width: 3; }
         .inner-bg { fill: #FFFFFF; }
-        .center-circle { fill: #F6F8FA; stroke: #E1E4E8; stroke-width: 1; }
+        .center-circle { fill: #F6F8FA; stroke: #E1E4E8; stroke-width: 2; }
 
-        /* Zodiac band like the reference image */
-        .zodiac-band   { fill: #6B46C1; }  /* dark purple */
-        .zodiac-cutout { fill: #FFFFFF; }  /* interior of the band */
-        .zodiac-divider { stroke: #FFFFFF; stroke-width: 1; }
+        /* Zodiac band - larger text and thicker lines for mobile */
+        .zodiac-band   { fill: #6B46C1; }
+        .zodiac-cutout { fill: #FFFFFF; }
+        .zodiac-divider { stroke: #FFFFFF; stroke-width: 2; }
 
         .sign-text { 
-            font: 600 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 800 18px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #FFFFFF; 
             text-anchor: middle; 
             dominant-baseline: middle; 
-            letter-spacing: 0.5px; 
+            letter-spacing: 1px; 
             text-transform: uppercase;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
         }
         
-        /* Houses */
-        .house-circle { fill: none; stroke: #D0D7DE; stroke-width: 1.5; }
-        .house-line { stroke: #D0D7DE; stroke-width: 1; opacity: 0.7; }
+        /* Houses - more visible */
+        .house-circle { fill: none; stroke: #D0D7DE; stroke-width: 2.5; }
+        .house-line { stroke: #D0D7DE; stroke-width: 2; opacity: 0.7; }
         .house-num { 
-            font: 700 13px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 900 20px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #2C3E50; 
             text-anchor: middle; 
             dominant-baseline: middle;
         }
         
-        /* Angles (subtle ticks only, no long thick lines) */
-        .angle-tick { stroke: #4A5568; stroke-width: 1.2; stroke-linecap: round; }
+        /* Angles - larger and more prominent */
+        .angle-tick { stroke: #4A5568; stroke-width: 2.5; stroke-linecap: round; }
         .angle-marker-outer { fill: #2C3E50; }
         .angle-marker-inner { fill: #FFD700; }
-        .angle-text-bg { fill: #2C3E50; rx: 3; }
+        .angle-text-bg { fill: #2C3E50; rx: 4; }
         .angle-text { 
-            font: 800 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 900 16px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #FFFFFF; 
             text-anchor: middle; 
             dominant-baseline: middle;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 1.2px;
         }
         
-        /* Planets */
+        /* Planets - larger for mobile */
         .planet-dot { filter: url(#planet-shadow); }
         .planet-glyph { 
-            font: 600 16px serif; 
+            font: 700 22px serif; 
             text-anchor: middle; 
             dominant-baseline: middle;
             fill: #FFFFFF;
         }
         .planet-degree { 
-            font: 400 9px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 600 13px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             text-anchor: middle; 
             dominant-baseline: middle;
-            fill: #586069;
+            fill: #2C3E50;
+            font-weight: 600;
         }
         
-        /* Aspects */
+        /* Aspects - thicker lines */
         .aspect { fill: none; stroke-linecap: round; }
         """
 
@@ -172,8 +192,26 @@ class SVGService:
             x2,y2 = self._pol_oriented(lon, r2, cx, cy, asc)
             return f'<line class="{cls}" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>'
 
-        def text_at(lon: float, r: float, text: str, cls: str) -> str:
-            x,y = self._pol_oriented(lon, r, cx, cy, asc)
+        def text_at(lon: float, r: float, text: str, cls: str, rotate: bool = False) -> str:
+            x, y = self._pol_oriented(lon, r, cx, cy, asc)
+            if rotate:
+                # Calculate rotation angle to align text radially (pointing outward from center)
+                angle = asc - lon + 180.0
+                # Normalize angle to -180 to 180
+                while angle > 180:
+                    angle -= 360
+                while angle < -180:
+                    angle += 360
+                
+                # Subtract 90 to align radially (perpendicular to circle)
+                angle -= 90
+                
+                # Flip text if it would be upside down (on the left side of circle)
+                # Text should always read left-to-right
+                if angle < -90 or angle > 90:
+                    angle += 180
+                
+                return f'<text class="{cls}" x="{x:.1f}" y="{y:.1f}" transform="rotate({-angle:.1f} {x:.1f} {y:.1f})">{text}</text>'
             return f'<text class="{cls}" x="{x:.1f}" y="{y:.1f}">{text}</text>'
 
         # Start SVG
@@ -201,12 +239,12 @@ class SVGService:
             x2, y2 = self._pol_oriented(start, r_sign_outer, cx, cy, asc)
             svg.append(f'<line class="zodiac-divider" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
 
-        # Sign labels (full names)
+        # Sign labels (full names) with rotation
         r_text = (r_sign_outer + r_sign_inner) / 2
         for s in range(12):
             start = s*30
             sign_name = ZODIAC[s]
-            svg.append(text_at(start + 15, r_text, sign_name.upper(), "sign-text"))
+            svg.append(text_at(start + 15, r_text, sign_name.upper(), "sign-text", rotate=True))
 
         # House circles
         svg.append(f'<circle class="house-circle" cx="{cx}" cy="{cy}" r="{r_house_out}"/>')
@@ -239,7 +277,7 @@ class SVGService:
                 x2, y2 = self._pol_oriented(house_cusp, r_house_num + 18, cx, cy, asc)
                 svg.append(
                     f'<text class="house-num" x="{x2:.1f}" y="{y2:.1f}" '
-                    f'style="font-weight:600; font-size:11px; fill:#445; opacity:0.85;">{label}</text>'
+                    f'style="font-weight:700; font-size:14px; fill:#445; opacity:0.9;">{label}</text>'
                 )
 
         # Inner circle
@@ -256,12 +294,12 @@ class SVGService:
         ]
         for lon, abbr in angle_data:
             svg.append(line_at(lon, tick_start, tick_end, "angle-tick"))
-            # marker + compact label hugging the band
+            # marker + compact label hugging the band (larger for mobile)
             x, y = self._pol_oriented(lon, r_sign_inner - 12, cx, cy, asc)
-            svg.append(f'<circle class="angle-marker-outer" cx="{x:.1f}" cy="{y:.1f}" r="5" filter="url(#angle-glow)"/>')
-            svg.append(f'<circle class="angle-marker-inner" cx="{x:.1f}" cy="{y:.1f}" r="2.5"/>')
-            text_x, text_y = self._pol_oriented(lon, r_sign_inner - 26, cx, cy, asc)
-            svg.append(f'<rect class="angle-text-bg" x="{text_x-16:.1f}" y="{text_y-7:.1f}" width="32" height="14"/>')
+            svg.append(f'<circle class="angle-marker-outer" cx="{x:.1f}" cy="{y:.1f}" r="7" filter="url(#angle-glow)"/>')
+            svg.append(f'<circle class="angle-marker-inner" cx="{x:.1f}" cy="{y:.1f}" r="3.5"/>')
+            text_x, text_y = self._pol_oriented(lon, r_sign_inner - 28, cx, cy, asc)
+            svg.append(f'<rect class="angle-text-bg" x="{text_x-20:.1f}" y="{text_y-9:.1f}" width="40" height="18"/>')
             svg.append(f'<text class="angle-text" x="{text_x:.1f}" y="{text_y:.1f}">{abbr}</text>')
 
         # Calculate aspects if not provided
@@ -287,7 +325,7 @@ class SVGService:
             color = PLANET_COLORS.get(name, "#000")
             
             planet_group = [f'<g transform="translate({x:.1f},{y:.1f})">']
-            planet_group.append(f'<circle class="planet-dot" r="11" fill="{color}"/>')
+            planet_group.append(f'<circle class="planet-dot" r="14" fill="{color}"/>')
             planet_group.append(f'<text class="planet-glyph" x="0" y="1">{P_GLYPH.get(name, name[0])}</text>')
             planet_group.append('</g>')
             planet_elements.extend(planet_group)
@@ -320,7 +358,7 @@ class SVGService:
                 x2, y2 = pts[p2]
                 
                 dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
-                stroke_width = "2.5" if a["aspect"] in ["conjunction", "opposition", "square", "trine"] else "2"
+                stroke_width = "3.5" if a["aspect"] in ["conjunction", "opposition", "square", "trine"] else "2.5"
                 
                 aspect_group.append(
                     f'<line class="aspect" stroke="{col}" stroke-width="{stroke_width}" '
@@ -363,79 +401,79 @@ class SVGService:
         r_inner_circle = size * 0.12
 
         css = """
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap');
         
         .chart-bg { fill: #FAFBFC; }
-        .outer-ring { fill: none; stroke: #E1E4E8; stroke-width: 2; }
-        .center-circle { fill: #F6F8FA; stroke: #E1E4E8; stroke-width: 1; }
+        .outer-ring { fill: none; stroke: #E1E4E8; stroke-width: 3; }
+        .center-circle { fill: #F6F8FA; stroke: #E1E4E8; stroke-width: 2; }
         
-        /* Zodiac band */
+        /* Zodiac band - larger for mobile */
         .zodiac-band   { fill: #6B46C1; }
         .zodiac-cutout { fill: #FFFFFF; }
-        .zodiac-divider { stroke: #FFFFFF; stroke-width: 1; }
+        .zodiac-divider { stroke: #FFFFFF; stroke-width: 2; }
         .sign-text { 
-            font: 600 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 800 18px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #FFFFFF; 
             text-anchor: middle; 
             dominant-baseline: middle; 
-            letter-spacing: 0.5px; 
+            letter-spacing: 1px; 
             text-transform: uppercase;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
         }
         
-        /* Planet rings */
-        .planet-ring { fill: #F8F9FA; stroke: #D0D7DE; stroke-width: 1; }
-        .planet-ring-divider { stroke: #E1E4E8; stroke-width: 0.5; opacity: 0.5; }
+        /* Planet rings - thicker lines */
+        .planet-ring { fill: #F8F9FA; stroke: #D0D7DE; stroke-width: 2; }
+        .planet-ring-divider { stroke: #E1E4E8; stroke-width: 1; opacity: 0.5; }
         
-        /* Houses */
-        .house-circle { fill: none; stroke: #D0D7DE; stroke-width: 1.5; }
-        .house-line { stroke: #D0D7DE; stroke-width: 1; opacity: 0.7; }
+        /* Houses - more visible */
+        .house-circle { fill: none; stroke: #D0D7DE; stroke-width: 2.5; }
+        .house-line { stroke: #D0D7DE; stroke-width: 2; opacity: 0.7; }
         .house-num { 
-            font: 700 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 900 18px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #2C3E50; 
             text-anchor: middle; 
             dominant-baseline: middle;
         }
         
-        /* Angles */
-        .angle-tick { stroke: #4A5568; stroke-width: 1.5; stroke-linecap: round; }
-        .angle-marker { fill: #FFD700; stroke: #2C3E50; stroke-width: 1.5; }
-        .angle-text-bg { fill: #2C3E50; rx: 3; }
+        /* Angles - larger */
+        .angle-tick { stroke: #4A5568; stroke-width: 2.5; stroke-linecap: round; }
+        .angle-marker { fill: #FFD700; stroke: #2C3E50; stroke-width: 2; }
+        .angle-text-bg { fill: #2C3E50; rx: 4; }
         .angle-text { 
-            font: 700 10px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 900 14px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             fill: #FFFFFF; 
             text-anchor: middle; 
             dominant-baseline: middle;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
         
-        /* Planets */
+        /* Planets - larger for mobile */
         .planet-inner { filter: url(#planet-shadow); }
         .planet-outer { filter: url(#planet-shadow); opacity: 0.9; }
         .planet-glyph { 
-            font: 600 14px serif; 
+            font: 700 20px serif; 
             text-anchor: middle; 
             dominant-baseline: middle;
             fill: #FFFFFF;
         }
         .planet-degree { 
-            font: 400 8px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font: 600 12px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             text-anchor: middle; 
             dominant-baseline: middle;
-            fill: #586069;
+            fill: #2C3E50;
         }
         
-        /* Aspects */
+        /* Aspects - thicker */
         .aspect { fill: none; stroke-linecap: round; }
         
-        /* Labels */
+        /* Labels - more readable */
         .chart-label {
-            font: 600 11px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            fill: #586069;
+            font: 800 15px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            fill: #2C3E50;
             text-anchor: middle;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
         """
 
@@ -444,8 +482,26 @@ class SVGService:
             x2,y2 = self._pol_oriented(lon, r2, cx, cy, asc)
             return f'<line class="{cls}" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>'
 
-        def text_at(lon, r, t, cls):
-            x,y = self._pol_oriented(lon, r, cx, cy, asc)
+        def text_at(lon, r, t, cls, rotate=False):
+            x, y = self._pol_oriented(lon, r, cx, cy, asc)
+            if rotate:
+                # Calculate rotation angle to align text radially (pointing outward from center)
+                angle = asc - lon + 180.0
+                # Normalize angle
+                while angle > 180:
+                    angle -= 360
+                while angle < -180:
+                    angle += 360
+                
+                # Subtract 90 to align radially (perpendicular to circle)
+                angle -= 90
+                
+                # Flip text if it would be upside down (on the left side of circle)
+                # Text should always read left-to-right
+                if angle < -90 or angle > 90:
+                    angle += 180
+                
+                return f'<text class="{cls}" x="{x:.1f}" y="{y:.1f}" transform="rotate({-angle:.1f} {x:.1f} {y:.1f})">{t}</text>'
             return f'<text class="{cls}" x="{x:.1f}" y="{y:.1f}">{t}</text>'
 
         svg = [
@@ -469,12 +525,12 @@ class SVGService:
             x2, y2 = self._pol_oriented(start, r_sign_outer, cx, cy, asc)
             svg.append(f'<line class="zodiac-divider" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
 
-        # Sign labels
+        # Sign labels with rotation
         r_text = (r_sign_outer + r_sign_inner) / 2
         for s in range(12):
             start = s*30
             sign_name = ZODIAC[s]
-            svg.append(text_at(start + 15, r_text, sign_name.upper(), "sign-text"))
+            svg.append(text_at(start + 15, r_text, sign_name.upper(), "sign-text", rotate=True))
 
         # Outer planets ring (with light background)
         svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_outer}" fill="#F8F9FA" stroke="#D0D7DE" stroke-width="1"/>')
@@ -508,12 +564,12 @@ class SVGService:
             # Draw tick from houses to just before zodiac
             svg.append(line_at(lon, r_house_out, r_sign_inner - 2, "angle-tick"))
             
-            # Add angle marker and label
+            # Add angle marker and label (larger for mobile)
             x, y = self._pol_oriented(lon, r_sign_inner - 12, cx, cy, asc)
-            svg.append(f'<circle class="angle-marker" cx="{x:.1f}" cy="{y:.1f}" r="4"/>')
+            svg.append(f'<circle class="angle-marker" cx="{x:.1f}" cy="{y:.1f}" r="6"/>')
             
-            text_x, text_y = self._pol_oriented(lon, r_sign_inner - 24, cx, cy, asc)
-            svg.append(f'<rect class="angle-text-bg" x="{text_x-14:.1f}" y="{text_y-6:.1f}" width="28" height="12"/>')
+            text_x, text_y = self._pol_oriented(lon, r_sign_inner - 26, cx, cy, asc)
+            svg.append(f'<rect class="angle-text-bg" x="{text_x-18:.1f}" y="{text_y-8:.1f}" width="36" height="16"/>')
             svg.append(f'<text class="angle-text" x="{text_x:.1f}" y="{text_y:.1f}">{abbr}</text>')
 
         # Chart labels
@@ -538,8 +594,8 @@ class SVGService:
             x, y = self._pol_oriented(lon, r_use, cx, cy, asc)
             color = PLANET_COLORS.get(name, "#000")
             
-            # Planet circle and glyph
-            svg.append(f'<circle class="planet-inner" cx="{x:.1f}" cy="{y:.1f}" r="9" fill="{color}"/>')
+            # Planet circle and glyph (larger for mobile)
+            svg.append(f'<circle class="planet-inner" cx="{x:.1f}" cy="{y:.1f}" r="12" fill="{color}"/>')
             svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+1:.1f}">{P_GLYPH.get(name, name[0])}</text>')
             
             # Degree label
@@ -572,9 +628,9 @@ class SVGService:
             x, y = self._pol_oriented(lon, r_use, cx, cy, asc)
             color = PLANET_COLORS.get(name, "#000")
             
-            # Planet circle and glyph (slightly smaller for outer)
-            svg.append(f'<circle class="planet-outer" cx="{x:.1f}" cy="{y:.1f}" r="8" fill="{color}"/>')
-            svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+1:.1f}" style="font-size:12px">{P_GLYPH.get(name, name[0])}</text>')
+            # Planet circle and glyph (larger for mobile)
+            svg.append(f'<circle class="planet-outer" cx="{x:.1f}" cy="{y:.1f}" r="11" fill="{color}"/>')
+            svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+1:.1f}" style="font-size:18px">{P_GLYPH.get(name, name[0])}</text>')
             
             # Degree label
             d = int(p["deg"])
@@ -618,7 +674,7 @@ class SVGService:
                     x2, y2 = pts_outer[a["p2"]]
                     col, dash, opacity = self._aspect_style(a["aspect"])
                     dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
-                    stroke_width = "2" if a["aspect"] in ["conjunction", "opposition", "square", "trine"] else "1.5"
+                    stroke_width = "3" if a["aspect"] in ["conjunction", "opposition", "square", "trine"] else "2"
                     
                     aspect_group.append(
                         f'<line class="aspect" stroke="{col}" stroke-width="{stroke_width}" '
