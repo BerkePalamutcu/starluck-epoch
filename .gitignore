@@ -5,3 +5,4 @@ __pycache__/
 debug_outputs
 Dockerfile
 .dockerignore
+tests

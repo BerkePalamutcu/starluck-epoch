@@ -488,14 +488,21 @@ class SVGService:
             letter-spacing: 1px;
         }
         
-        /* Planets - VERY LARGE black glyphs with NO background */
+        /* Planets - VERY LARGE glyphs with NO background - differentiated colors */
         .planet-inner { }
         .planet-outer { opacity: 0.9; }
-        .planet-glyph { 
+        .planet-glyph-inner { 
             font: 400 42px serif; 
             text-anchor: middle; 
             dominant-baseline: middle;
-            fill: #1A1A1A;
+            fill: #000000;
+            filter: url(#glyph-glow);
+        }
+        .planet-glyph-outer { 
+            font: 400 42px serif; 
+            text-anchor: middle; 
+            dominant-baseline: middle;
+            fill: #DC2626;
             filter: url(#glyph-glow);
         }
         .planet-degree { 
@@ -573,13 +580,13 @@ class SVGService:
             sign_name = ZODIAC[s]
             svg.append(text_at(start + 15, r_text, sign_name.upper(), "sign-text", rotate=True))
 
-        # Outer planets ring (with light background)
-        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_outer}" fill="#F8F9FA" stroke="#D0D7DE" stroke-width="1"/>')
-        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_inner}" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1"/>')
+        # Outer planets ring (light pink/rose background for outer chart - clearly distinct)
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_outer}" fill="#FFE4E6" stroke="#FECDD3" stroke-width="1"/>')
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_outer_planets_inner}" fill="#FFFFFF" stroke="#FECDD3" stroke-width="1"/>')
         
-        # Inner planets ring (with light background)
-        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_inner_planets_outer}" fill="#F0F1F3" stroke="#D0D7DE" stroke-width="1"/>')
-        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_inner_planets_inner}" fill="#FFFFFF" stroke="#D0D7DE" stroke-width="1"/>')
+        # Inner planets ring (light blue background for inner chart - clearly distinct)
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_inner_planets_outer}" fill="#E0F2FE" stroke="#BAE6FD" stroke-width="1"/>')
+        svg.append(f'<circle cx="{cx}" cy="{cy}" r="{r_inner_planets_inner}" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1"/>')
 
         # Houses (conditional)
         if show_houses:
@@ -652,8 +659,8 @@ class SVGService:
             
             x, y = self._pol_oriented(lon, r_use, cx, cy, asc)
             
-            # Just the glyph, NO background circle
-            svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+2:.1f}">{P_GLYPH.get(name, name[0])}</text>')
+            # Just the glyph, NO background circle - inner planets are black
+            svg.append(f'<text class="planet-glyph-inner" x="{x:.1f}" y="{y+2:.1f}">{P_GLYPH.get(name, name[0])}</text>')
             
             placed_inner.append((lon, r_use))
             
@@ -697,8 +704,8 @@ class SVGService:
             
             x, y = self._pol_oriented(lon, r_use, cx, cy, asc)
             
-            # Just the glyph, NO background circle
-            svg.append(f'<text class="planet-glyph" x="{x:.1f}" y="{y+2:.1f}">{P_GLYPH.get(name, name[0])}</text>')
+            # Just the glyph, NO background circle - outer planets are dark blue
+            svg.append(f'<text class="planet-glyph-outer" x="{x:.1f}" y="{y+2:.1f}">{P_GLYPH.get(name, name[0])}</text>')
             
             placed_outer.append((lon, r_use))
             
