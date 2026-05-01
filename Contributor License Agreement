@@ -1,0 +1,58 @@
+Contributing to starluck-epoch
+Thank you for your interest in contributing to starluck-epoch, a project developed and maintained by MythLabs S.R.L. (Romania).
+
+Contributor License Agreement (CLA) — Required Before Contributing
+By submitting any contribution to this repository — including but not limited to code, documentation, configuration, tests, bug reports with attached patches, or any other material — you agree to the following terms in full.
+If you do not agree to these terms, do not submit a contribution.
+
+1. Definitions
+
+"Contribution" means any original work of authorship submitted to this repository, including modifications, additions, pull requests, patches, issues with code, or any other material intentionally submitted for inclusion in the project.
+"You" means the individual or legal entity submitting a Contribution.
+"MythLabs" means MythLabs S.R.L., a company incorporated under Romanian law.
+
+
+2. Assignment of Intellectual Property
+You irrevocably assign to MythLabs S.R.L. all right, title, and interest — worldwide and in perpetuity — in and to your Contribution, including all intellectual property rights therein (copyright, patent rights, trade secrets, and any other proprietary rights), to the maximum extent permitted by applicable law.
+This assignment takes effect at the moment your Contribution is submitted, with no further action required by either party.
+
+3. MythLabs S.R.L. Rights
+Upon assignment, MythLabs S.R.L. holds sole and total rights over all Contributions, including the unrestricted right to:
+
+Use, reproduce, modify, and distribute the Contribution in any form
+Incorporate the Contribution into commercial products or services
+License, sublicense, or sell the Contribution or any derivative works
+Relicense the project, including under proprietary or commercial licenses
+Enforce intellectual property rights against any third party
+
+
+4. Your Representations
+By submitting a Contribution, you represent and warrant that:
+
+You are the sole author of the Contribution and have the legal right to assign it.
+The Contribution does not infringe upon any third-party intellectual property rights.
+If you are contributing on behalf of an employer or under an employment agreement, you have obtained all necessary permissions and authorizations from that employer.
+The Contribution does not contain any malicious code, backdoors, or material subject to export restrictions.
+
+
+5. No Compensation
+Unless explicitly agreed in writing by MythLabs S.R.L., contributions are made voluntarily and without expectation of compensation, equity, royalties, or any other remuneration.
+
+6. Moral Rights Waiver
+To the extent permitted by applicable law, you waive all moral rights in your Contribution, including the right of attribution in the context of the project. MythLabs S.R.L. may, at its sole discretion, acknowledge contributors publicly.
+
+7. Project License
+The project is currently distributed under the GNU Affero General Public License v3.0 (AGPL-3.0). MythLabs S.R.L. reserves the right to change the license of this project — including to a proprietary license — at any time, for any version, including versions that incorporate your Contribution.
+The AGPL-3.0 license governs your use of the software, not ownership of contributions.
+
+8. Governing Law
+This agreement is governed by the laws of Romania, without regard to conflict of law principles. Any disputes arising from this agreement shall be subject to the exclusive jurisdiction of the courts of Timișoara, Romania.
+
+How to Contribute
+
+Fork the repository and create your branch from main.
+Ensure your code follows the existing style and passes all tests.
+Submit a Pull Request with a clear description of the change and its purpose.
+By opening a Pull Request, you confirm you have read and agree to this CLA.
+
+For significant changes, please open an issue first to discuss the proposal.
