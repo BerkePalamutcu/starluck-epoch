@@ -315,17 +315,7 @@ This project is licensed under the **AGPL License**. Free to use with some depen
 
 ## Contributing
 
-We welcome contributions! Here's how to get involved:
-
-**Bug Reports**: Open an issue with a clear description and minimal reproduction steps
-
-**Feature Requests**: Suggest enhancements with detailed use cases  
-
-**Design Improvements**: Submit PRs for UI/UX improvements with screenshots
-
-**Documentation**: Help improve our docs and examples
-
-Before submitting, please include a clear description, relevant screenshots for visual changes, and test your changes thoroughly.
+Please Read Contributor License Agreement before doing any contribution.
 
 ---
 
