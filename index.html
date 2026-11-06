@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Starluck Chart Viewer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff;
+      --fg: #1d2330;
+      --muted: #667085;
+      --card: #f4f5f9;
+      --border: #d8dbe6;
+      --accent: #5b4bdb;
+      --error: #b42318;
+      --success: #067647;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #14161d;
+        --fg: #e8eaf2;
+        --muted: #9aa0b4;
+        --card: #1d2029;
+        --border: #2d3140;
+        --accent: #8d80ff;
+        --error: #ff8a80;
+        --success: #75e0a7;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 15px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+    }
+
+    header, main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1 { margin: 0 0 10px; font-size: 22px; }
+    h2 { margin: 0 0 10px; font-size: 17px; }
+    h3 { margin: 18px 0 6px; font-size: 15px; }
+    .card { padding: 16px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+    label { display: flex; flex-direction: column; gap: 3px; color: var(--muted); font-size: 12px; }
+
+    input, select {
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--fg);
+      font: inherit;
+    }
+
+    button {
+      padding: 9px 14px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.secondary { border: 1px solid var(--accent); background: transparent; color: var(--accent); }
+    button:disabled { opacity: .5; cursor: wait; }
+    nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    nav button { border: 1px solid var(--border); background: transparent; color: var(--fg); }
+    nav button.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .downloads { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+    .chart-image { display: block; width: 100%; max-width: 920px; height: auto; margin: 0 auto; }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; }
+    pre { overflow: auto; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); white-space: pre-wrap; overflow-wrap: anywhere; }
+    #message { margin-top: 10px; }
+    #message.error { color: var(--error); }
+    #health.success { color: var(--success); }
+    .empty { color: var(--muted); }
+    summary { margin-top: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>★ Starluck Chart Viewer</h1>
+    <div class="row">
+      <label>API URL
+        <input id="base" type="url" value="http://127.0.0.1:8000" size="26">
+      </label>
+      <label>API key (optional)
+        <input id="key" type="password" autocomplete="off" size="18">
+      </label>
+      <button id="ping" class="secondary" type="button">Health check</button>
+      <span id="health" role="status" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="person-a-heading">
+      <h2 id="person-a-heading">Person A</h2>
+      <div id="person-a"></div>
+      <div class="row">
+        <button id="calculate" type="button">Calculate chart</button>
+        <label>Forecast days
+          <input id="days" type="number" value="7" min="1" max="60" style="width: 90px">
+        </label>
+        <button id="forecast" class="secondary" type="button">Transit forecast</button>
+      </div>
+      <div class="row">
+        <button id="add-person-b" class="secondary" type="button">Add Person B</button>
+        <span id="person-b-hint" class="empty">Person B is optional. Add them to unlock relationship comparisons.</span>
+      </div>
+      <section id="person-b-section" aria-labelledby="person-b-heading" hidden>
+        <h3 id="person-b-heading">Person B</h3>
+        <p>Adding a second birth chart enables these comparison tools:</p>
+        <ul>
+          <li><strong>Biwheel:</strong> view both charts together in one wheel.</li>
+          <li><strong>Synastry:</strong> see aspects between Person A's and Person B's planets.</li>
+          <li><strong>Composite:</strong> explore midpoint positions calculated from both charts.</li>
+        </ul>
+        <div id="person-b"></div>
+        <div class="row">
+          <button id="compare" class="secondary" type="button">Compare A + B</button>
+          <button id="remove-person-b" class="secondary" type="button">Remove Person B</button>
+        </div>
+      </section>
+      <div id="message" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card" aria-label="Chart results">
+      <nav id="tabs" aria-label="Chart result views">
+        <button type="button" data-tab="wheel" class="active">Wheel</button>
+        <button type="button" data-tab="data">Data</button>
+        <button type="button" data-tab="report">Report</button>
+        <button type="button" data-tab="forecast">Forecast</button>
+        <button type="button" data-tab="compare" hidden>Compare A + B</button>
+      </nav>
+      <div id="panel-wheel" class="panel active"><p class="empty">Calculate a chart to see the wheel.</p></div>
+      <div id="panel-data" class="panel"></div>
+      <div id="panel-report" class="panel"></div>
+      <div id="panel-forecast" class="panel"></div>
+      <div id="panel-compare" class="panel"></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = selector => document.querySelector(selector);
+    const state = { A: null, B: null };
+    const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"]/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;'
+    })[character]);
+
+    const position = longitude => {
+      if (typeof longitude !== 'number' || !Number.isFinite(longitude)) return '-';
+      const normalized = ((longitude % 360) + 360) % 360;
+      return `${(normalized % 30).toFixed(2)}° ${signs[Math.floor(normalized / 30)]}`;
+    };
+
+    const degrees = value => Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}°` : '-';
+
+    function renderTable(headers, rows) {
+      return `<div class="scroll"><table><thead><tr>${headers.map(header => `<th>${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>` +
+        rows.map(row => `<tr>${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('') +
+        '</tbody></table></div>';
+    }
+
+    function downloadBlob(filename, blob) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function downloadText(filename, content, type = 'text/plain;charset=utf-8') {
+      downloadBlob(filename, new Blob([content], { type }));
+    }
+
+    function createDownloadBar(panelSelector, options) {
+      const panel = $(panelSelector);
+      const bar = document.createElement('div');
+      bar.className = 'downloads';
+      bar.setAttribute('aria-label', 'Download results');
+      for (const [label, action] of options) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'secondary';
+        button.textContent = label;
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          try {
+            await action();
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            setMessage(`Download failed: ${message}`, true);
+          } finally {
+            button.disabled = false;
+          }
+        });
+        bar.append(button);
+      }
+      panel.prepend(bar);
+    }
+
+    function tableData(panel) {
+      return [...panel.querySelectorAll('table')].map(table => ({
+        title: table.closest('.scroll')?.previousElementSibling?.matches('h3')
+          ? table.closest('.scroll').previousElementSibling.textContent
+          : panel.id === 'panel-forecast' ? 'Transit Forecast' : 'Results',
+        rows: [...table.rows].map(row => [...row.cells].map(cell => cell.textContent.trim()))
+      }));
+    }
+
+    function csvContent(panel) {
+      const tables = tableData(panel);
+      if (!tables.length) throw new Error('There are no tables to download yet.');
+      return tables.map(({ title, rows }) => [
+        `"${title.replace(/"/g, '""')}"`,
+        ...rows.map(row => row.map(value => `"${value.replace(/"/g, '""')}"`).join(','))
+      ].join('\r\n')).join('\r\n\r\n');
+    }
+
+    function markdownContent(panel) {
+      const tables = tableData(panel);
+      if (!tables.length) throw new Error('There are no tables to download yet.');
+      return tables.map(({ title, rows }) => {
+        const [header, ...body] = rows;
+        if (!header) return `## ${title}\n`;
+        const formatRow = row => `| ${row.map(value => value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ')).join(' | ')} |`;
+        return `## ${title}\n\n${formatRow(header)}\n${formatRow(header.map(() => '---'))}\n${body.map(formatRow).join('\n')}`;
+      }).join('\n\n');
+    }
+
+    function downloadTables(panelSelector, filename, format) {
+      const panel = $(panelSelector);
+      const content = format === 'csv' ? csvContent(panel) : markdownContent(panel);
+      downloadText(filename, content, format === 'csv' ? 'text/csv;charset=utf-8' : 'text/markdown;charset=utf-8');
+    }
+
+    async function downloadPng(svg, filename) {
+      if (typeof svg !== 'string' || !svg.trim()) throw new Error('There is no chart image to download.');
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      try {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        const viewBox = svg.match(/viewBox=["']\s*[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)\s*["']/i);
+        const width = Math.ceil(image.naturalWidth || Number(svg.match(/\bwidth=["']([\d.]+)/i)?.[1]) || Number(viewBox?.[1]) || 900);
+        const height = Math.ceil(image.naturalHeight || Number(svg.match(/\bheight=["']([\d.]+)/i)?.[1]) || Number(viewBox?.[2]) || width);
+        if (width > 4096 || height > 4096) throw new Error('Chart dimensions are too large to export as PNG.');
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Could not create an image canvas.');
+        context.drawImage(image, 0, 0, width, height);
+        const png = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (!png) throw new Error('The browser could not encode the chart as PNG.');
+        downloadBlob(filename, png);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    async function api(path, body) {
+      const headers = {};
+      if (body) headers['Content-Type'] = 'application/json';
+      const key = $('#key').value.trim();
+      if (key) headers.Authorization = `Bearer ${key}`;
+
+      const base = $('#base').value.trim().replace(/\/+$/, '');
+      const response = await fetch(`${base}/api/v1/${path}`, {
+        method: body ? 'POST' : 'GET',
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        if (!response.ok) throw new Error(`${response.status}: ${text}`);
+        throw new Error('The API returned an invalid JSON response.');
+      }
+
+      if (!response.ok) {
+        const detail = typeof data.detail === 'string' ? data.detail : text;
+        throw new Error(`${response.status}: ${detail}`);
+      }
+      return data;
+    }
+
+    function setMessage(text, isError = false) {
+      const message = $('#message');
+      message.textContent = text;
+      message.className = isError ? 'error' : '';
+    }
+
+    async function run(action) {
+      document.querySelectorAll('button').forEach(button => button.disabled = true);
+      setMessage('Working...');
+      try {
+        await action();
+        setMessage('');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setMessage(message.includes('Failed to fetch')
+          ? 'Could not reach the API. Check the URL, that the server is running, and CORS settings.'
+          : message, true);
+      } finally {
+        document.querySelectorAll('button').forEach(button => button.disabled = false);
+      }
+    }
+
+    function showPanel(name) {
+      if (name === 'compare' && !state.B) return;
+      document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === `panel-${name}`));
+      document.querySelectorAll('#tabs button').forEach(button => button.classList.toggle('active', button.dataset.tab === name));
+    }
+
+    $('#tabs').addEventListener('click', event => {
+      const name = event.target.dataset.tab;
+      if (name) showPanel(name);
+    });
+
+    function setPersonBEnabled(enabled) {
+      $('#person-b-section').hidden = !enabled;
+      $('#add-person-b').hidden = enabled;
+      $('#person-b-hint').hidden = enabled;
+      $('#tabs [data-tab="compare"]').hidden = !enabled;
+      if (!enabled) {
+        state.B = null;
+        $('#panel-compare').replaceChildren();
+        if ($('#panel-compare').classList.contains('active')) showPanel('wheel');
+      }
+    }
+
+    $('#add-person-b').addEventListener('click', () => setPersonBEnabled(true));
+    $('#remove-person-b').addEventListener('click', () => setPersonBEnabled(false));
+
+    function form(id, defaults) {
+      $(`#${id}`).innerHTML = `<div class="grid">
+        <label>Date / time
+          <input type="datetime-local" data-key="datetime" value="${defaults.datetime}" required>
+        </label>
+        <label>Timezone (IANA)
+          <input data-key="timezone" value="${defaults.timezone}" required>
+        </label>
+        <label>Latitude
+          <input type="number" step="any" min="-90" max="90" data-key="latitude" value="${defaults.latitude}" required>
+        </label>
+        <label>Longitude
+          <input type="number" step="any" min="-180" max="180" data-key="longitude" value="${defaults.longitude}" required>
+        </label>
+        <label>Elevation (m)
+          <input type="number" step="any" min="0" data-key="elevation" value="${defaults.elevation}" required>
+        </label>
+        <label>House system
+          <select data-key="house-system">
+            <option>PLACIDUS</option>
+            <option>WHOLE</option>
+          </select>
+        </label>
+      </div>`;
+    }
+
+    function readPerson(id) {
+      const fields = [...document.querySelectorAll(`#${id} [data-key]`)];
+      const invalid = fields.find(field => !field.checkValidity());
+      if (invalid) {
+        invalid.reportValidity();
+        throw new Error('Please enter valid birth details.');
+      }
+      const value = key => $(`#${id} [data-key="${key}"]`).value;
+      return {
+        datetime_local: value('datetime').replace('T', ' '),
+        timezone: value('timezone').trim(),
+        location: {
+          lat: Number(value('latitude')),
+          lon: Number(value('longitude')),
+          elevation_m: Number(value('elevation'))
+        },
+        house_system: value('house-system')
+      };
+    }
+
+    function renderSvg(panelSelector, svg, alt) {
+      if (typeof svg !== 'string' || !svg.trim()) throw new Error('The API returned an empty chart image.');
+      const image = document.createElement('img');
+      image.className = 'chart-image';
+      image.alt = alt;
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      $(panelSelector).replaceChildren(image);
+      return svg;
+    }
+
+    function renderData(chart) {
+      const planets = Object.entries(chart.planets || {}).map(([name, planet]) => [
+        name,
+        position(planet?.lon),
+        planet?.retro ? 'R' : ''
+      ]);
+      const angles = Object.entries(chart.angles || {}).map(([name, longitude]) => [name, position(longitude)]);
+      const aspects = (chart.aspects || []).map(aspect => [
+        aspect.p1,
+        aspect.aspect,
+        aspect.p2,
+        degrees(aspect.orb)
+      ]);
+
+      $('#panel-data').innerHTML =
+        '<h3>Planets</h3>' + renderTable(['Body', 'Position', 'Retro'], planets) +
+        '<h3>Angles</h3>' + renderTable(['Angle', 'Position'], angles) +
+        '<h3>Aspects</h3>' + renderTable(['Body 1', 'Aspect', 'Body 2', 'Orb'], aspects) +
+        `<details><summary>Raw JSON</summary><pre>${escapeHtml(JSON.stringify(chart, null, 2))}</pre></details>`;
+      createDownloadBar('#panel-data', [
+        ['Download tables (CSV)', () => downloadTables('#panel-data', 'starluck-chart-data.csv', 'csv')],
+        ['Download raw data (JSON)', () => downloadText('starluck-chart-data.json', JSON.stringify(chart, null, 2), 'application/json;charset=utf-8')]
+      ]);
+    }
+
+    $('#ping').addEventListener('click', () => run(async () => {
+      const health = await api('health');
+      $('#health').textContent = ` OK ${JSON.stringify(health)}`;
+      $('#health').className = 'success';
+    }));
+
+    $('#calculate').addEventListener('click', () => run(async () => {
+      const chart = await api('natal', readPerson('person-a'));
+      state.A = chart;
+      renderData(chart);
+
+      const [wheel, report] = await Promise.all([
+        api('svg', { chart_data: chart, size: 900, show_aspects: true }),
+        api('report', { chart_data: chart, title: 'Birth Chart Analysis' })
+      ]);
+      const svg = renderSvg('#panel-wheel', wheel.svg_content, 'Natal chart wheel');
+      createDownloadBar('#panel-wheel', [
+        ['Download chart (SVG)', () => downloadText('starluck-natal-chart.svg', svg, 'image/svg+xml;charset=utf-8')],
+        ['Download chart (PNG)', () => downloadPng(svg, 'starluck-natal-chart.png')]
+      ]);
+      $('#panel-report').innerHTML = `<pre>${escapeHtml(report.report_content)}</pre>`;
+      createDownloadBar('#panel-report', [
+        ['Download report (Markdown)', () => downloadText('starluck-chart-report.md', report.report_content, 'text/markdown;charset=utf-8')],
+        ['Download report (TXT)', () => downloadText('starluck-chart-report.txt', report.report_content)]
+      ]);
+      showPanel('wheel');
+    }));
+
+    $('#forecast').addEventListener('click', () => run(async () => {
+      if (!state.A) throw new Error('Calculate chart A first.');
+      const result = await api('forecast', {
+        natal_chart: state.A,
+        start_date: new Date().toISOString().slice(0, 10),
+        timezone: readPerson('person-a').timezone,
+        days: Number($('#days').value) || 7,
+        step_hours: 12
+      });
+      const rows = (result.transits || []).map(transit => [
+        transit.when_utc,
+        transit.transit,
+        transit.aspect,
+        transit.natal,
+        degrees(transit.orb_diff)
+      ]);
+      $('#panel-forecast').innerHTML = rows.length
+        ? renderTable(['When (UTC)', 'Transit', 'Aspect', 'Natal', 'Orb'], rows)
+        : '<p class="empty">No transits found in this window.</p>';
+      if (rows.length) {
+        const forecastText = [['When (UTC)', 'Transit', 'Aspect', 'Natal', 'Orb'], ...rows]
+          .map(row => row.join('\t'))
+          .join('\n');
+        createDownloadBar('#panel-forecast', [
+          ['Download forecast (CSV)', () => downloadTables('#panel-forecast', 'starluck-transit-forecast.csv', 'csv')],
+          ['Download forecast (TXT)', () => downloadText('starluck-transit-forecast.txt', forecastText)]
+        ]);
+      }
+      showPanel('forecast');
+    }));
+
+    $('#compare').addEventListener('click', () => run(async () => {
+      if (!state.A) throw new Error('Calculate chart A first.');
+      const chartB = await api('natal', readPerson('person-b'));
+      state.B = chartB;
+
+      const [biwheel, synastry, composite] = await Promise.all([
+        api('biwheel', {
+          inner_chart: state.A,
+          outer_chart: chartB,
+          size: 920,
+          label_inner: 'Person A',
+          label_outer: 'Person B',
+          show_aspects: true
+        }),
+        api('synastry', { chart_a: state.A, chart_b: chartB }),
+        api('composite', { chart_a: state.A, chart_b: chartB })
+      ]);
+
+      const interaspects = (synastry.interaspects || []).map(aspect => [
+        aspect.p1,
+        aspect.aspect,
+        aspect.p2,
+        degrees(aspect.orb)
+      ]);
+      const midpoints = Object.entries(composite.midpoints || {}).map(([name, longitude]) => [
+        name,
+        position(longitude)
+      ]);
+
+      const svg = renderSvg('#panel-compare', biwheel.svg_content, 'Synastry biwheel for Person A and Person B');
+      $('#panel-compare').insertAdjacentHTML('beforeend',
+        '<h3>Inter-aspects (A to B)</h3>' + renderTable(['A', 'Aspect', 'B', 'Orb'], interaspects) +
+        '<h3>Composite midpoints</h3>' + renderTable(['Body', 'Position'], midpoints));
+      createDownloadBar('#panel-compare', [
+        ['Download biwheel (SVG)', () => downloadText('starluck-synastry-biwheel.svg', svg, 'image/svg+xml;charset=utf-8')],
+        ['Download biwheel (PNG)', () => downloadPng(svg, 'starluck-synastry-biwheel.png')],
+        ['Download comparison tables (CSV)', () => downloadTables('#panel-compare', 'starluck-comparison.csv', 'csv')],
+        ['Download comparison tables (Markdown)', () => downloadTables('#panel-compare', 'starluck-comparison.md', 'md')]
+      ]);
+      showPanel('compare');
+    }));
+
+    form('person-a', {
+      datetime: '2007-05-23T14:12',
+      timezone: 'Asia/Kolkata',
+      latitude: 22.5726,
+      longitude: 88.3639,
+      elevation: 11
+    });
+    form('person-b', {
+      datetime: '1992-06-15T09:30',
+      timezone: 'Europe/London',
+      latitude: 51.5074,
+      longitude: -0.1278,
+      elevation: 11
+    });
+  </script>
+</body>
+</html>
