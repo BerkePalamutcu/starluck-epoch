@@ -18,45 +18,198 @@ A powerful, modern API that computes natal data, renders beautiful SVG chart whe
 - **Transit Forecasts** — Future planetary influences and timing
 - **Markdown Reports** — Clean, readable astrological interpretations
 
-## Quick Setup
+## Complete Setup Guide
 
-### Prerequisites
-- Python 3.11+
+### Requirements
 
-### Installation
+- Python 3.11 is recommended. The pinned dependencies include compiled packages;
+  Python versions without compatible wheels may require native build tools.
+- Git, if you are cloning the repository.
+- A modern browser for the optional chart viewer.
+
+### 1. Get the project
+
+Clone the repository or open your existing project folder, then change to its
+root directory (the directory containing `README.md` and `requirements.txt`):
 
 ```bash
-# Clone the repository
-git clone git@github.com:BerkePalamutcu/starluck-epoch.git
+git clone https://github.com/BerkePalamutcu/starluck-epoch.git
 cd starluck-epoch
-
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
 ```
 
-### Configuration
+### 2. Create an isolated Python environment
 
-Create a `.env` file in the root directory like:
+Use the commands for your operating system. On Windows, create the environment
+with the Python 3.11 launcher so it uses the intended interpreter:
+
+**Windows PowerShell**
+
+```powershell
+$venv = ".\.venv"
+py -3.11 -m venv $venv
+$py = (Resolve-Path "$venv\Scripts\python.exe").Path
+& $py -m pip install --upgrade pip
+& $py -m pip install -r requirements.txt -r requirements.test.txt
+```
+
+If `py -3.11` is unavailable, install Python 3.11 and enable the Python
+launcher, or use its full interpreter path in place of `py -3.11`.
+If `.venv` already exists and was created with another Python version, create a
+new environment with a different name rather than using that old environment.
+For example, set `$venv = ".\.venv311"` above. PowerShell variables are local
+to one terminal window; in each new window, set `$venv` to the environment you
+created, then set `$py` with
+`$py = (Resolve-Path "$venv\Scripts\python.exe").Path`.
+
+**macOS / Linux**
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt -r requirements.test.txt
+```
+
+`requirements.txt` installs the API. `requirements.test.txt` adds the HTTP
+client and dotenv package used by the endpoint smoke-test script. Confirm the
+installation by importing the main dependencies:
+
+```powershell
+# Windows PowerShell
+$venv = ".\.venv" # Use .\.venv311 if that is the environment you created.
+$py = (Resolve-Path "$venv\Scripts\python.exe").Path
+& $py -c "import fastapi, uvicorn, pydantic, swisseph, ephem, requests; print('Dependencies OK')"
+```
+
+```bash
+# macOS / Linux (with the environment activated)
+python -c "import fastapi, uvicorn, pydantic, swisseph, ephem, requests; print('Dependencies OK')"
+```
+
+### 3. Configure the API
+
+The API reads settings from environment variables prefixed with `STARLUCK_`.
+For local use, create a `.env` file in the project root. The following
+configuration allows both common local viewer addresses and keeps API-key
+authentication disabled:
 
 ```env
-STARLUCK_DEBUG=false                 # If set true This will create a debug_outputs folder when you make requests so that you can examine the outputs. Set false in production or modify the code.
-STARLUCK_API_KEY=                    # Optional API key protection in case you want to connect other services
-STARLUCK_ALLOWED_HOSTS=127.0.0.1,localhost # Optional if you want to use it as a microservice feel free to modify
-STARLUCK_CORS_ORIGINS=http://localhost:8000 # Optional if you want to use it as a microservice feel free to modify 
-STARLUCK_SWE_PATH=                   # Optional; works without external files but if you want to use you can also include swiss ephimeris.
+STARLUCK_ALLOWED_HOSTS=["127.0.0.1","localhost"]
+STARLUCK_CORS_ORIGINS=["http://localhost:5500","http://127.0.0.1:5500"]
+STARLUCK_ENABLE_API_KEY_AUTH=false
+STARLUCK_API_KEY=
+STARLUCK_ENABLE_DEBUG_OUTPUTS=false
+STARLUCK_SWE_PATH=
 ```
 
-### Start the Server
+The host and CORS settings are lists and must be written as JSON arrays in
+`.env` or when set as environment variables. Do not use comma-separated values
+for these settings: Pydantic Settings parses list environment values as JSON.
+The default server address is `127.0.0.1:8000`; the viewer uses that address by
+default. Swiss Ephemeris data files are optional.
+
+To turn on API-key authentication, set a private key and enable the setting:
+
+```env
+STARLUCK_ENABLE_API_KEY_AUTH=true
+STARLUCK_API_KEY=replace-with-your-own-secret
+```
+
+Enter the same key in the viewer's **API key** field. Do not commit a real key
+or other secrets to source control.
+
+### 4. Start the API
+
+From the project root, run:
+
+```powershell
+# Windows PowerShell
+$venv = ".\.venv" # Use .\.venv311 if that is the environment you created.
+$py = (Resolve-Path "$venv\Scripts\python.exe").Path
+& $py -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
 ```bash
-uvicorn main:app --reload
+# macOS / Linux (with the environment activated)
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-**Health Check:** `GET /api/v1/health`
+Keep this terminal open. A successful start includes `Application startup
+complete.` Check the health endpoint at <http://127.0.0.1:8000/api/v1/health>;
+it should return JSON with `"status":"healthy"`. Interactive API documentation
+is available at <http://127.0.0.1:8000/docs>.
+
+### 5. Start the browser chart viewer (optional)
+
+Open a second terminal at the project root and start a static web server:
+
+```powershell
+# Windows PowerShell
+$venv = ".\.venv" # Use .\.venv311 if that is the environment you created.
+$py = (Resolve-Path "$venv\Scripts\python.exe").Path
+& $py -m http.server 5500 --bind 127.0.0.1
+```
+
+```bash
+# macOS / Linux (with the environment activated)
+python -m http.server 5500 --bind 127.0.0.1
+```
+
+Open <http://localhost:5500> in a browser. Do not open `index.html` directly
+with a `file://` URL; browsers commonly block API requests from local files.
+The viewer starts with Person A's chart details and supports the chart wheel,
+data, report, and transit forecast. Select **Add Person B** to reveal the
+biwheel, synastry, and composite comparison features.
+
+If the page cannot reach the API, check that the API terminal is still running
+and that `.env` includes the exact viewer origin in `STARLUCK_CORS_ORIGINS`.
+For example, `http://localhost:5500` and `http://127.0.0.1:5500` are different
+origins and must each be listed if you use both.
+
+Generated results have download buttons for SVG/PNG chart images, CSV tables,
+raw chart JSON, TXT/Markdown reports, and TXT/CSV/Markdown forecast or
+comparison data.
+
+### 6. Run the endpoint smoke test (optional)
+
+With the API running, open a third terminal at the project root. The test
+script exercises the health, natal, SVG, biwheel, synastry, composite, report,
+and forecast endpoints. It writes its output files to `debug_outputs/`.
+
+```powershell
+# Windows PowerShell
+$venv = ".\.venv" # Use .\.venv311 if that is the environment you created.
+$py = (Resolve-Path "$venv\Scripts\python.exe").Path
+& $py app\tests\api_test.py
+```
+
+```bash
+# macOS / Linux (with the environment activated)
+python app/tests/api_test.py
+```
+
+If API-key authentication is enabled, set `STARLUCK_API_KEY` and
+`STARLUCK_ENABLE_API_KEY_AUTH=true` in the environment or `.env` before running
+the script. The default smoke-test URL is `http://localhost:8000/api/v1`.
+
+### Troubleshooting
+
+- **`py -3.11` is not recognized:** install Python 3.11 and its Windows
+  launcher, or invoke the Python 3.11 executable by its full path.
+- **The virtual environment uses the wrong Python:** recreate `.venv` with the
+  desired interpreter and verify it with `& $py --version` (Windows) or
+  `python --version` (macOS/Linux).
+- **Native package build errors:** use Python 3.11 and upgrade pip in the
+  environment. Older package pins may not provide wheels for newer Python
+  releases.
+- **Settings error parsing `cors_origins` or `allowed_hosts`:** use JSON-array
+  values as shown above, for example
+  `STARLUCK_CORS_ORIGINS=["http://localhost:5500"]`.
+- **Browser CORS or connection error:** make sure both servers are running,
+  use `http://localhost:5500` rather than `file://`, and allow the exact page
+  origin in `STARLUCK_CORS_ORIGINS`.
+- **401 response:** API-key authentication is enabled; enter the configured
+  `STARLUCK_API_KEY` in the viewer.
 
 ---
 
